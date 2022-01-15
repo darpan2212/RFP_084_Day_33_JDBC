@@ -21,7 +21,7 @@ public class DatabaseConnector {
 			String password = "root";
 
 			try {
-				Class.forName("com.mysql.cj.jdbc.Driver");
+				Class.forName("com.mysql.cj.jdbc.Driver"); //loading the Driver class
 				System.out.println("JDBC Driver class is loaded.");
 			} catch (Exception e) {
 				System.out.println("mysql connector is not loaded");
@@ -36,7 +36,7 @@ public class DatabaseConnector {
 				System.out.println(
 						"Connection established successfully.");
 			} catch (SQLException e) {
-				System.out.println("Connection establish failed.");
+				System.out.println("Connection establish failed.\n");
 				e.printStackTrace();
 			}
 		}
