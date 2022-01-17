@@ -1,6 +1,7 @@
 package com.bridglelabz.employee;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -10,6 +11,7 @@ import java.util.List;
 
 import com.bridglelabz.employee.model.DepartmentModel;
 import com.bridglelabz.employee.model.EmployeePayrollModel;
+import com.bridglelabz.employee.model.SalaryModel;
 
 public class EmployeePayrollService {
 
@@ -120,7 +122,7 @@ public class EmployeePayrollService {
 			System.out.println(
 					"Update salary query status " + updateStatus);
 			ps.close();
-			this.getEmployeesSalaryDetails(con);
+//			this.getEmployeesSalaryDetails(con);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -146,5 +148,90 @@ public class EmployeePayrollService {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public int addEmployeeData(EmployeePayrollModel employee,
+			SalaryModel salary, Connection con) {
+		int insertStatus = 0;
+
+		try {
+			con.setAutoCommit(false);
+		} catch (SQLException e) {
+			try {
+				con.rollback();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			e.printStackTrace();
+		}
+		try {
+			Statement st = con.createStatement();
+			ResultSet rs = st.executeQuery(
+					"select dept_id from department_table "
+							+ "where dept_name='"
+							+ employee.getDepartment().getDept_name()
+							+ "'");
+			int dept_id = 0;
+			while (rs.next()) {
+				dept_id = rs.getInt("dept_id");
+			}
+			PreparedStatement ps = con.prepareStatement(
+					sql.ADD_EMPLOYEE_QUERY,
+					PreparedStatement.RETURN_GENERATED_KEYS);
+			ps.setString(1, employee.getName());
+			ps.setInt(2, dept_id);
+			ps.setString(3, employee.getGender());
+			ps.setDate(4, new Date(employee.getStart().getTime()));
+
+			insertStatus = ps.executeUpdate();
+
+			if (insertStatus == 1) {
+				ResultSet rsNewEmp = ps.getGeneratedKeys();
+				if (rsNewEmp.next()) {
+					int emp_id = rsNewEmp.getInt(1);
+					insertStatus = this.addSalaryDetails(emp_id,
+							salary, con);
+				}
+			}
+			st.close();
+			ps.close();
+			rs.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return insertStatus;
+	}
+
+	private int addSalaryDetails(int emp_id, SalaryModel salary,
+			Connection con) {
+		int insertSalaryStatus = 0;
+		try {
+			salary.setDeduction(0.2 * salary.getBasic_pay());
+			salary.setTaxable_pay(
+					salary.getBasic_pay() - salary.getDeduction());
+			salary.setTax(0.1 * salary.getTaxable_pay());
+			salary.setNet_pay(
+					salary.getTaxable_pay() - salary.getTax());
+			salary.setEmp_id(emp_id);
+
+			PreparedStatement ps = con
+					.prepareStatement(sql.ADD_SALARY_QUERY);
+			ps.setDouble(1, salary.getBasic_pay());
+			ps.setDouble(2, salary.getDeduction());
+			ps.setDouble(3, salary.getTaxable_pay());
+			ps.setDouble(4, salary.getTax());
+			ps.setDouble(5, salary.getNet_pay());
+			ps.setInt(6, salary.getEmp_id());
+
+			insertSalaryStatus = ps.executeUpdate();
+
+			if (insertSalaryStatus == 1) {
+				con.commit();
+			}
+			ps.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return insertSalaryStatus;
 	}
 }
