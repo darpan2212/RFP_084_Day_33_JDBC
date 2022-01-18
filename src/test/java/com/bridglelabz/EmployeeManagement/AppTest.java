@@ -23,7 +23,6 @@ public class AppTest {
 		assertEquals(1, updateStatus);
 	}
 
-	@Test
 	public void addNewEmployee() {
 		Connection con = DatabaseConnector.getConnection();
 
@@ -35,12 +34,19 @@ public class AppTest {
 		emp.setGender("M");
 		emp.setStart(currentDate);
 		DepartmentModel deptModel = new DepartmentModel();
-		deptModel.setDept_name("Sales");
+		deptModel.setDept_id(1);
 		emp.setDepartment(deptModel);
 
 		SalaryModel salary = new SalaryModel();
 		salary.setBasic_pay(1400000);
 		int insertStatus = service.addEmployeeData(emp, salary, con);
 		assertEquals(1, insertStatus);
+	}
+	
+	@Test
+	public void deleteEmployee() {
+		EmployeePayrollService service = new EmployeePayrollService();
+		Connection con = DatabaseConnector.getConnection();
+		assertEquals(1, service.deleteEmployee("Jeff",con));
 	}
 }
